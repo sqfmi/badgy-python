@@ -3,6 +3,8 @@ from machine import Pin, SPI
 
 # SPI1 on ESP8266
 spi  = SPI(1, baudrate=80000000, polarity=0, phase=0)
+
+# SPI pins for Badgy
 cs   = Pin(15, Pin.OUT)
 dc   = Pin(0, Pin.OUT)
 rst  = Pin(2, Pin.OUT)
