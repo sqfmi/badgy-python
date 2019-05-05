@@ -18,5 +18,5 @@ y = 0
 
 from image import micropython_logo
 e.clear_frame_memory(0xFF)
-e.set_frame_memory(hello, x, y, w, h)
+e.set_frame_memory(micropython_logo, x, y, w, h)
 e.display_frame()
