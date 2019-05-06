@@ -7,5 +7,5 @@
 <img src="badgy_python.jpg" width="400" height="400">
 
 ## Next Steps
-* Check out this [library](https://github.com/mcauser/micropython-waveshare-epaper) on more examples and function calls
+* Check out this [library](https://github.com/mcauser/micropython-waveshare-epaper) by [@mcauser](https://github.com/mcauser) for more examples and function calls
 * We'll be adding more examples shortly!
