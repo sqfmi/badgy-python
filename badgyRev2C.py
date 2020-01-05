@@ -1,31 +1,9 @@
 from micropython import const
 from time import sleep_ms
-import ustruct
 
 # Display resolution
 EPD_WIDTH  = const(128)
 EPD_HEIGHT = const(296)
-
-# Display commands
-DRIVER_OUTPUT_CONTROL                = const(0x01)
-BOOSTER_SOFT_START_CONTROL           = const(0x0C)
-
-DATA_ENTRY_MODE_SETTING              = const(0x11)
-
-MASTER_ACTIVATION                    = const(0x20)
-
-DISPLAY_UPDATE_CONTROL_2             = const(0x22)
-WRITE_RAM                            = const(0x24)
-WRITE_VCOM_REGISTER                  = const(0x2C)
-WRITE_LUT_REGISTER                   = const(0x32)
-SET_DUMMY_LINE_PERIOD                = const(0x3A)
-SET_GATE_TIME                        = const(0x3B)
-
-SET_RAM_X_ADDRESS_START_END_POSITION = const(0x44)
-SET_RAM_Y_ADDRESS_START_END_POSITION = const(0x45)
-SET_RAM_X_ADDRESS_COUNTER            = const(0x4E)
-SET_RAM_Y_ADDRESS_COUNTER            = const(0x4F)
-TERMINATE_FRAME_READ_WRITE           = const(0xFF)
 
 BUSY = const(1)  # 1=busy\=idle
 
@@ -78,21 +56,7 @@ class EPD:
 
     # put an image in the frame memory
     def set_frame_memory(self, image, x, y, w, h):
-        self.clear_frame_memory(bytearray([0xFF]))
-        # x point must be the multiple of 8 or the last 3 bits will be ignored
-        x = x & 0xF8
-        w = w & 0xF8
-
-        if (x + w >= self.width):
-            x_end = self.width - 1
-        else:
-            x_end = x + w - 1
-
-        if (y + h >= self.height):
-            y_end = self.height - 1
-        else:
-            y_end = y + h - 1
-
+        self.clear_frame_memory(0xFF)
         self._command(0x13, image)
 
     # replace the frame memory with the specified color
@@ -101,7 +65,7 @@ class EPD:
         self._command(0x10)
         # send the color data
         for i in range(0, self.width // 8 * self.height):
-            self._data(bytearray([0xFF]))
+            self._data(bytearray([color]))
 
     # draw the current frame memory and switch to the next memory area
     def display_frame(self):
@@ -110,10 +74,8 @@ class EPD:
         self._sleep()
 
     def _init_full_update(self):
-        self._command(0x82)
-        self._data(bytearray([0x08]))
-        self._command(0X50)
-        self._data(bytearray([0x97]))
+        self._command(0x82,b'\x08')
+        self._command(0X50,b'\x97')
 
         self._command(0x20)
         self._data(self.LUT_20_VCOMDC)
@@ -128,27 +90,13 @@ class EPD:
 
     def _wake_up(self):
         self.reset()
-        self._command(0x01)
-        self._data(bytearray([0x03]))
-        self._data(bytearray([0x00]))
-        self._data(bytearray([0x2B]))
-        self._data(bytearray([0x2B]))
-        self._data(bytearray([0x03]))
-
-        self._command(0x06)
-        self._data(bytearray([0x17]))
-        self._data(bytearray([0x17]))
-        self._data(bytearray([0x17]))
-
+        self._command(0x01,b'\x03\x00\x2B\x2B\x03')
+        self._command(0x06,b'\x17\x17\x17')
         self._command(0x04);
         self.wait_until_idle()
 
-        self._command(0x00)
-        self._data(bytearray([0xBF]))
-        self._data(bytearray([0x0D]))
-
-        self._command(0x30)
-        self._data(bytearray([0x3A]))
+        self._command(0x00,b'\xBF\x0D')
+        self._command(0x30,b'\x3A')
 
         self._command(0x61)
         self._data(bytearray([EPD_WIDTH]))
@@ -158,6 +106,5 @@ class EPD:
 
     def _sleep(self):
         self._command(0x02)
-        self._command(0x07)
-        self._data(bytearray([0xA5]))
+        self._command(0x07, b'\xA5')
         self.wait_until_idle()
