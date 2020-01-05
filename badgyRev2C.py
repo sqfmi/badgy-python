@@ -6,6 +6,27 @@ import ustruct
 EPD_WIDTH  = const(128)
 EPD_HEIGHT = const(296)
 
+# Display commands
+DRIVER_OUTPUT_CONTROL                = const(0x01)
+BOOSTER_SOFT_START_CONTROL           = const(0x0C)
+
+DATA_ENTRY_MODE_SETTING              = const(0x11)
+
+MASTER_ACTIVATION                    = const(0x20)
+
+DISPLAY_UPDATE_CONTROL_2             = const(0x22)
+WRITE_RAM                            = const(0x24)
+WRITE_VCOM_REGISTER                  = const(0x2C)
+WRITE_LUT_REGISTER                   = const(0x32)
+SET_DUMMY_LINE_PERIOD                = const(0x3A)
+SET_GATE_TIME                        = const(0x3B)
+
+SET_RAM_X_ADDRESS_START_END_POSITION = const(0x44)
+SET_RAM_Y_ADDRESS_START_END_POSITION = const(0x45)
+SET_RAM_X_ADDRESS_COUNTER            = const(0x4E)
+SET_RAM_Y_ADDRESS_COUNTER            = const(0x4F)
+TERMINATE_FRAME_READ_WRITE           = const(0xFF)
+
 BUSY = const(1)  # 1=busy\=idle
 
 class EPD:
@@ -57,7 +78,7 @@ class EPD:
 
     # put an image in the frame memory
     def set_frame_memory(self, image, x, y, w, h):
-        self.clear_frame_memory(0xFF)
+        self.clear_frame_memory(bytearray([0xFF]))
         # x point must be the multiple of 8 or the last 3 bits will be ignored
         x = x & 0xF8
         w = w & 0xF8
@@ -80,7 +101,7 @@ class EPD:
         self._command(0x10)
         # send the color data
         for i in range(0, self.width // 8 * self.height):
-            self._data(bytearray([color]))
+            self._data(bytearray([0xFF]))
 
     # draw the current frame memory and switch to the next memory area
     def display_frame(self):
@@ -90,53 +111,53 @@ class EPD:
 
     def _init_full_update(self):
         self._command(0x82)
-        self._data(0x08)
+        self._data(bytearray([0x08]))
         self._command(0X50)
-        self._data(0x97)
+        self._data(bytearray([0x97]))
 
         self._command(0x20)
-        self._data(LUT_20_VCOMDC)
+        self._data(self.LUT_20_VCOMDC)
         self._command(0x21)
-        self._data(LUT_21_WW)
+        self._data(self.LUT_21_WW)
         self._command(0x22)
-        self._data(LUT_22_BW)
+        self._data(self.LUT_22_BW)
         self._command(0x23)
-        self._data(LUT_23_WB)
+        self._data(self.LUT_23_WB)
         self._command(0x24)
-        self._data(LUT_24_BB)
+        self._data(self.LUT_24_BB)
 
     def _wake_up(self):
         self.reset()
         self._command(0x01)
-        self._data(0x03)
-        self._data(0x00)
-        self._data(0x2b)
-        self._data(0x2b)
-        self._data(0x03)
+        self._data(bytearray([0x03]))
+        self._data(bytearray([0x00]))
+        self._data(bytearray([0x2B]))
+        self._data(bytearray([0x2B]))
+        self._data(bytearray([0x03]))
 
         self._command(0x06)
-        self._data(0x17)
-        self._data(0x17)
-        self._data(0x17)
+        self._data(bytearray([0x17]))
+        self._data(bytearray([0x17]))
+        self._data(bytearray([0x17]))
 
         self._command(0x04);
         self.wait_until_idle()
 
         self._command(0x00)
-        self._data(0xbf)
-        self._data(0x0d)
+        self._data(bytearray([0xBF]))
+        self._data(bytearray([0x0D]))
 
         self._command(0x30)
-        self._data(0x3a)
+        self._data(bytearray([0x3A]))
 
         self._command(0x61)
-        self._data(EPD_WIDTH)
-        self._data(EPD_HEIGHT >> 8)
-        self._data(EPD_HEIGHT & 0xFF)
+        self._data(bytearray([EPD_WIDTH]))
+        self._data(bytearray([EPD_HEIGHT >> 8]))
+        self._data(bytearray([EPD_HEIGHT & 0xFF]))
         self._init_full_update()
 
     def _sleep(self):
         self._command(0x02)
         self._command(0x07)
-        self._data(0xA5)
+        self._data(bytearray([0xA5]))
         self.wait_until_idle()
